@@ -1,60 +1,69 @@
-## The first function makes a list with methods that set and get a matrix and its inverse in an intrinsic environment variable
-## The second function is passed the list from the first and attempts to calculate and set its inverse.  If the inverse is already set, teh cached value is used
 
-## makeCacheMatrix will create a matrix x, and expose three methods to set/get x and its inverse
+# The assignment states that running the code is not part of the grading 
+# but I have the instructions anyway.
 
-makeCacheMatrix <- function(x = matrix()) {
-  cachedInv <- NULL ## initialize inverse
-  
-  ## set x in parent env with the desired value, if inverse is already set, get rid of it!
-  set <- function(userValue = matrix()) {
-    x <<- userValue 
-    cachedInv <<- NULL
-  }
-  
-  get <- function() x
-  
-  ##set inverse variable in parent env to desired value and return the value as a convenience
-  setInverse <- function(invVal) {
-    cachedInv <<- invVal 
-    return(cachedInv)
-  }
-  
-  getInverse  <- function() cachedInv
-  list(set=set, get=get, setInverse=setInverse, getInverse=getInverse)
+# makeCacheMatrix is a function that returns a list of functions
+# Its puspose is to store a martix and a cached value of the inverse of the 
+# matrix. Contains the following functions:
+# * setMatrix      set the value of a matrix
+# * getMatrix      get the value of a matrix
+# * cacheInverse   get the cahced value (inverse of the matrix)
+# * getInverse     get the cahced value (inverse of the matrix)
+#
+# Notes:
+# not sure how the "x = numeric()" part works in the argument list of the 
+# function, but it seems to be creating a variable "x" that is not reachable 
+# from the global environment, but is available in the environment of the 
+# makeCacheMatrix function
+makeCacheMatrix <- function(x = numeric()) {
+        
+        # holds the cached value or NULL if nothing is cached
+        # initially nothing is cached so set it to NULL
+        cache <- NULL
+        
+        # store a matrix
+        setMatrix <- function(newValue) {
+                x <<- newValue
+                # since the matrix is assigned a new value, flush the cache
+                cache <<- NULL
+        }
+
+        # returns the stored matrix
+        getMatrix <- function() {
+                x
+        }
+
+        # cache the given argument 
+        cacheInverse <- function(solve) {
+                cache <<- solve
+        }
+
+        # get the cached value
+        getInverse <- function() {
+                cache
+        }
+        
+        # return a list. Each named element of the list is a function
+        list(setMatrix = setMatrix, getMatrix = getMatrix, cacheInverse = cacheInverse, getInverse = getInverse)
 }
 
 
-## given the list variable from the first function, will first check to see if there's already a cached inverse and return
-## otherwise will attempt to solve its inverse and set/return it
-
-cacheSolve <- function(x=makeCacheMatrix(1:4, nrow=2, ncol=2), ...) { ##special matrix provided or create a test 2x2 matrix
-  
-  ## let's see if there's something there already
-  calculatedInverse <- x$getInverse() 
-  
-  ##check if there's a cached value AND it's a matrix
-  if(!is.null(calculatedInverse) && is.matrix(calculatedInverse)) { 
-    message("We found cached data and saved valuable cpus!!!")
-    return(calculatedInverse)
-  }
-  
-  ## otherwise get the matrix
-  matrixToSolve <- x$get()  
-  
-  ## try to solve the matrix and catch errors and warnings
-  calculatedInverse <- tryCatch({ 
-    solve(matrixToSolve)
-  }, warning=function(w) {
-    message("This may not be the result you're looking for")
-    message(w)
-  }, error=function(e) {
-    message("Something went wrong solving your matrix")
-    message(e)
-    message("\n")
-  })
-  
-  ## whatever the case, set the value of the inverse (NULL if something went wrong)
-  message("Setting the value of inverse to:") 
-  x$setInverse(calculatedInverse)
+# The following function calculates the inverse of a "special" matrix created with 
+# makeCacheMatrix
+cacheSolve <- function(y, ...) {
+        # get the cached value
+        inverse <- y$getInverse()
+        # if a cached value exists return it
+        if(!is.null(inverse)) {
+                message("getting cached data")
+                return(inverse)
+        }
+        # otherwise get the matrix, caclulate the inverse and store it in
+        # the cache
+        data <- y$getMatrix()
+        inverse <- solve(data)
+        y$cacheInverse(inverse)
+        
+        # return the inverse
+        inverse
 }
